@@ -1,0 +1,16 @@
+[package]
+name = "reward_distribution"
+version = "1.0.0"
+authors = []
+
+[addresses]
+reward_distribution = "_"
+
+[dev-addresses]
+reward_distribution = "0xBEEF"
+
+[dependencies.SupraFramework]
+git = "https://github.com/Entropy-Foundation/aptos-core.git"
+rev = "aptosvm-v1.16_supra-v1.6.6"
+subdir = "aptos-move/framework/supra-framework"
+
