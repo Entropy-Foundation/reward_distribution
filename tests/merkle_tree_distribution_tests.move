@@ -121,8 +121,9 @@ module reward_distribution::merkle_tree_distribution_tests {
         let (burn_cap, mint_cap) = init_supra(admin);
         coin::register<SupraCoin>(supra);
         merkle_tree_distribution::init(owner);
-
+        assert!(merkle_tree_distribution::get_admin_address() == signer::address_of(owner), 123);
         merkle_tree_distribution::update_admin(owner, signer::address_of(new_admin));
+        assert!(merkle_tree_distribution::get_admin_address() == signer::address_of(new_admin), 123);
 
         clean_up(burn_cap, mint_cap);
     }
@@ -270,8 +271,11 @@ module reward_distribution::merkle_tree_distribution_tests {
         let alice_before = bal(ALICE);
         let vault_before = merkle_tree_distribution::get_vault_balance();
 
+         assert!(merkle_tree_distribution::get_total_distributed() == 0, 123);
 
         merkle_tree_distribution::claim_rewards(alice, ALICE, 500, empty_proof());
+
+        assert!(merkle_tree_distribution::get_total_distributed() == 500, 123);
 
         assert!(bal(ALICE) == alice_before + 500, 0);
         assert!(merkle_tree_distribution::get_vault_balance() == vault_before - 500, 0);

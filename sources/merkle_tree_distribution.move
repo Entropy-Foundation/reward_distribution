@@ -331,4 +331,9 @@ module reward_distribution::merkle_tree_distribution {
     public fun get_admin_address(): address acquires State, RewardDistributorController {
         borrow_global<State>(get_obj_address()).admin
     }
+
+    #[view]
+    public fun get_total_distributed(): u64 acquires State, RewardDistributorController {
+        borrow_global<State>(get_obj_address()).total_rewards_distributed
+    }
 }
