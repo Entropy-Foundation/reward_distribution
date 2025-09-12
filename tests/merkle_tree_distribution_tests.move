@@ -113,6 +113,34 @@ module reward_distribution::merkle_tree_distribution_tests {
     }
 
     /***********************
+     * update_admin()
+    ***********************/
+    #[test(supra = @0x1, admin = @supra_framework, new_admin = @0xDEAD, owner = @reward_distribution)]
+    fun test_update_admin_by_owner_succeeds(supra: &signer, admin: &signer, new_admin: &signer, owner: &signer) {
+        ensure_accounts();
+        let (burn_cap, mint_cap) = init_supra(admin);
+        coin::register<SupraCoin>(supra);
+        merkle_tree_distribution::init(owner);
+
+        merkle_tree_distribution::update_admin(owner, signer::address_of(new_admin));
+
+        clean_up(burn_cap, mint_cap);
+    }
+
+    #[test(supra = @0x1, owner = @reward_distribution, alice = @0xA11CE)]
+    #[expected_failure(abort_code = 327681)] // E_NOT_OWNER
+    fun test_update_admin_by_non_owner_fails(supra: &signer,owner: &signer, alice: &signer) {
+        ensure_accounts();
+        let (burn_cap, mint_cap) = init_supra(supra);
+
+        coin::register<SupraCoin>(supra);
+        merkle_tree_distribution::init(owner);
+        merkle_tree_distribution::update_admin(alice, signer::address_of(alice));
+
+        clean_up(burn_cap, mint_cap);
+    }
+
+    /***********************
      * deposit()
     ***********************/
     #[test(supra = @0x1, owner = @reward_distribution, admin = @supra_framework)]
@@ -189,12 +217,13 @@ module reward_distribution::merkle_tree_distribution_tests {
     }
 
     #[test(supra = @0x1, owner = @reward_distribution, bob = @0xB0B, admin = @supra_framework)]
-    #[expected_failure] // E_NOT_OWNER
+    #[expected_failure(abort_code = 327681)] // E_NOT_OWNER
     fun test_withdraw_by_non_owner_fails(supra: &signer,owner: &signer, bob: &signer, admin: &signer) {
         ensure_accounts();
+        let (burn_cap, mint_cap) = init_supra(admin);
         coin::register<SupraCoin>(supra);
         merkle_tree_distribution::init(owner);
-        let (burn_cap, mint_cap) = init_supra(admin);
+
         register(bob);
 
         merkle_tree_distribution::withdraw(bob, 1);
@@ -203,7 +232,7 @@ module reward_distribution::merkle_tree_distribution_tests {
     }
 
     #[test(supra = @0x1, owner = @reward_distribution, admin = @supra_framework)]
-    #[expected_failure] // E_INSUFFICIENT_VAULT_FUNDS
+    #[expected_failure(abort_code = 65539)] // E_INSUFFICIENT_VAULT_FUNDS
     fun test_withdraw_owner_insufficient_balance_fails(supra: &signer,owner: &signer, admin: &signer) {
         ensure_accounts();
         coin::register<SupraCoin>(supra);
@@ -316,7 +345,7 @@ module reward_distribution::merkle_tree_distribution_tests {
     ***********************/
 
     #[test(supra = @0x1, owner = @reward_distribution, admin = @supra_framework, alice = @0xA11CE)]
-    #[expected_failure] // E_INVALID_MERKLE_PROOF
+    #[expected_failure(abort_code = 65540)] // E_INVALID_MERKLE_PROOF
     fun test_claim_invalid_proof_user_mismatch(supra: &signer,owner: &signer, admin: &signer, alice: &signer) {
         ensure_accounts();
         let (burn_cap, mint_cap) = init_supra(admin);
@@ -337,7 +366,7 @@ module reward_distribution::merkle_tree_distribution_tests {
     }
 
     #[test(supra = @0x1, owner = @reward_distribution, admin = @supra_framework, alice = @0xA11CE)]
-    #[expected_failure] // E_NOTHING_TO_CLAIM
+    #[expected_failure(abort_code = 196613)] // E_NOTHING_TO_CLAIM
     fun test_claim_again_same_cumulative_fails(supra: &signer,owner: &signer, admin: &signer, alice: &signer) {
         ensure_accounts();
         let (burn_cap, mint_cap) = init_supra(admin);
@@ -359,7 +388,7 @@ module reward_distribution::merkle_tree_distribution_tests {
     }
 
     #[test(supra = @0x1, owner = @reward_distribution, admin = @supra_framework, alice = @0xA11CE)]
-    #[expected_failure] // E_NOTHING_TO_CLAIM
+    #[expected_failure(abort_code = 196613)] // E_NOTHING_TO_CLAIM
     fun test_claim_with_lower_cumulative_than_claimed_fails(supra: &signer,owner: &signer, admin: &signer, alice: &signer) {
         ensure_accounts();
         let (burn_cap, mint_cap) = init_supra(admin);
@@ -383,7 +412,7 @@ module reward_distribution::merkle_tree_distribution_tests {
     }
 
     #[test(supra = @0x1, owner = @reward_distribution, admin = @supra_framework, alice = @0xA11CE)]
-    #[expected_failure] // E_INSUFFICIENT_VAULT_FUNDS
+    #[expected_failure(abort_code = 196614)] // E_INSUFFICIENT_VAULT_FUNDS
     fun test_claim_insufficient_vault_funds(supra: &signer,owner: &signer, admin: &signer, alice: &signer) {
         ensure_accounts();
         let (burn_cap, mint_cap) = init_supra(admin);
@@ -404,16 +433,17 @@ module reward_distribution::merkle_tree_distribution_tests {
     }
 
     #[test(supra = @0x1, owner = @reward_distribution, admin = @supra_framework, alice = @0xA11CE)]
-    #[expected_failure] // second call hits E_NOTHING_TO_CLAIM
+    #[expected_failure(abort_code = 196613)] // second call hits E_NOTHING_TO_CLAIM
     fun test_two_half_attempts_without_root_bump_fails(supra: &signer,owner: &signer, admin: &signer, alice: &signer) {
         ensure_accounts();
 
         let (burn_cap, mint_cap) = init_supra(admin);
         coin::register<SupraCoin>(supra);
         merkle_tree_distribution::init(owner);
-        mint_to(&mint_cap, signer::address_of(owner), 1_000);
         register(owner);
         register(alice);
+        mint_to(&mint_cap, signer::address_of(owner), 1_000);
+
 
         merkle_tree_distribution::deposit(owner, 1_000);
 
