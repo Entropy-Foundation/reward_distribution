@@ -336,4 +336,9 @@ module reward_distribution::merkle_tree_distribution {
     public fun get_total_claimed(): u64 acquires State, RewardDistributorController {
         borrow_global<State>(get_obj_address()).total_claimed_tokens
     }
+
+    #[view]
+    public fun get_vault_address(): address acquires RewardDistributorController {
+        signer::address_of(&get_vault_signer())
+    }
 }
