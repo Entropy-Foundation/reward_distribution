@@ -173,7 +173,7 @@ module reward_distribution::merkle_tree_distribution {
         let addr = signer::address_of(account);
         let balance = coin::balance<SupraCoin>(addr);
         assert!(balance >= amount, error::invalid_state(E_INSUFFICIENT_FUNDS));
-        coin::transfer<SupraCoin>(account, signer::address_of(&get_vault_signer()), amount);
+        coin::transfer<SupraCoin>(account, get_vault_address(), amount);
         event::emit<Deposit>(Deposit { amount, account: addr });
     }
 
@@ -191,8 +191,7 @@ module reward_distribution::merkle_tree_distribution {
     public entry fun withdraw(owner: &signer, amount: u64) acquires State, RewardDistributorController {
         assert_owner(owner);
         let addr = signer::address_of(owner);
-        let balance = coin::balance<SupraCoin>(signer::address_of(&get_vault_signer()));
-        assert!(balance >= amount, error::invalid_state(E_INSUFFICIENT_VAULT_FUNDS));
+        assert!(get_vault_balance() >= amount, error::invalid_state(E_INSUFFICIENT_VAULT_FUNDS));
         coin::transfer<SupraCoin>(&get_vault_signer(), addr, amount);
         event::emit<Withdrawal>(Withdrawal { amount, to: addr });
     }
@@ -323,7 +322,7 @@ module reward_distribution::merkle_tree_distribution {
     // Returns total balance of the vault
     #[view]
     public fun get_vault_balance(): u64 acquires RewardDistributorController {
-        coin::balance<SupraCoin>(signer::address_of(&get_vault_signer()))
+        coin::balance<SupraCoin>(get_vault_address())
     }
 
     // Returns total balance of the vault
@@ -332,11 +331,13 @@ module reward_distribution::merkle_tree_distribution {
         borrow_global<State>(get_obj_address()).admin
     }
 
+    // Returns the total supra claimed by the users
     #[view]
     public fun get_total_claimed(): u64 acquires State, RewardDistributorController {
         borrow_global<State>(get_obj_address()).total_claimed_tokens
     }
 
+    // Returns the vault signer address
     #[view]
     public fun get_vault_address(): address acquires RewardDistributorController {
         signer::address_of(&get_vault_signer())
