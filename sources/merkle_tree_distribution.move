@@ -43,7 +43,7 @@ module reward_distribution::merkle_tree_distribution {
         current_root: vector<u8>,
         claimed_tokens: table::Table<address, u64>,
         admin: address,
-        total_rewards_distributed: u64
+        total_claimed_tokens: u64
     }
 
     #[resource_group_member(group = supra_framework::object::ObjectGroup)]
@@ -106,7 +106,7 @@ module reward_distribution::merkle_tree_distribution {
             vault_signer_cap : vault_signer_cap,
         });
 
-        move_to(obj_signer, State { current_root: vector::empty(), claimed_tokens: table::new<address, u64>(), admin: OWNER, total_rewards_distributed: 0 });
+        move_to(obj_signer, State { current_root: vector::empty(), claimed_tokens: table::new<address, u64>(), admin: OWNER, total_claimed_tokens: 0 });
     }
 
     /***************
@@ -300,7 +300,7 @@ module reward_distribution::merkle_tree_distribution {
     fun internal_set_claimed_total(user: address, new_total: u64, pay: u64) acquires State, RewardDistributorController {
         let state = borrow_global_mut<State>(get_obj_address());
         table::upsert(&mut state.claimed_tokens, user, new_total);
-        state.total_rewards_distributed = state.total_rewards_distributed + pay;
+        state.total_claimed_tokens = state.total_claimed_tokens + pay;
     }
 
     // /*****************
@@ -333,7 +333,7 @@ module reward_distribution::merkle_tree_distribution {
     }
 
     #[view]
-    public fun get_total_distributed(): u64 acquires State, RewardDistributorController {
-        borrow_global<State>(get_obj_address()).total_rewards_distributed
+    public fun get_total_claimed(): u64 acquires State, RewardDistributorController {
+        borrow_global<State>(get_obj_address()).total_claimed_tokens
     }
 }

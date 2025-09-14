@@ -271,11 +271,11 @@ module reward_distribution::merkle_tree_distribution_tests {
         let alice_before = bal(ALICE);
         let vault_before = merkle_tree_distribution::get_vault_balance();
 
-         assert!(merkle_tree_distribution::get_total_distributed() == 0, 123);
+         assert!(merkle_tree_distribution::get_total_claimed() == 0, 123);
 
         merkle_tree_distribution::claim_rewards(alice, ALICE, 500, empty_proof());
 
-        assert!(merkle_tree_distribution::get_total_distributed() == 500, 123);
+        assert!(merkle_tree_distribution::get_total_claimed() == 500, 123);
 
         assert!(bal(ALICE) == alice_before + 500, 0);
         assert!(merkle_tree_distribution::get_vault_balance() == vault_before - 500, 0);
