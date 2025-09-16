@@ -4,6 +4,7 @@ version = "1.0.0"
 authors = []
 
 [addresses]
+#  reward_distribution = "0x7871b01b6e827eb648e29a0e43a1f65b7a9878ca1d89e6cd96e34eff26abcd19"
 reward_distribution = "_"
 
 [dev-addresses]
