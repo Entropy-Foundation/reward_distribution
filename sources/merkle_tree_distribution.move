@@ -1,3 +1,6 @@
+/// SPDX-License-Identifier: MIT
+/// Copyright (C) Supra -- 2025
+
 module reward_distribution::merkle_tree_distribution {
     use std::signer;
     use std::vector;
@@ -32,6 +35,7 @@ module reward_distribution::merkle_tree_distribution {
     const E_NOTHING_TO_CLAIM: u64 = 5;
     const E_INSUFFICIENT_VAULT_FUNDS: u64 = 6;
     const E_INSUFFICIENT_FUNDS: u64 = 7;
+    const E_SUPRA_COIN_NOT_REGISTERED: u64 = 7;
 
     /***********************
      * Resources
@@ -41,6 +45,8 @@ module reward_distribution::merkle_tree_distribution {
     struct State has key {
         current_root: vector<u8>,
         claimed_tokens: table::Table<address, u64>,
+        admin: address,
+        total_claimed_tokens: u64
     }
 
     #[resource_group_member(group = supra_framework::object::ObjectGroup)]
@@ -56,6 +62,11 @@ module reward_distribution::merkle_tree_distribution {
     #[event]
     struct RootUpdated has copy, drop, store {
       new_root: vector<u8>,
+    }
+
+    #[event]
+    struct AdminUpdated has copy, drop, store {
+      new_admin: address,
     }
 
     #[event]
@@ -98,7 +109,7 @@ module reward_distribution::merkle_tree_distribution {
             vault_signer_cap : vault_signer_cap,
         });
 
-        move_to(owner, State { current_root: vector::empty(), claimed_tokens: table::new<address, u64>() });
+        move_to(obj_signer, State { current_root: vector::empty(), claimed_tokens: table::new<address, u64>(), admin: OWNER, total_claimed_tokens: 0 });
     }
 
     /***************
@@ -116,9 +127,9 @@ module reward_distribution::merkle_tree_distribution {
     ///
     /// # Aborts
     /// - `E_NOT_OWNER` if not the owner of this module
-    public entry fun update_root(owner: &signer, new_root: vector<u8>) acquires State {
+    public entry fun update_root(owner: &signer, new_root: vector<u8>) acquires State, RewardDistributorController {
         assert_owner(owner);
-        let state = borrow_global_mut<State>(signer::address_of(owner));
+        let state = borrow_global_mut<State>(get_obj_address());
 
         state.current_root = new_root;
 
@@ -126,6 +137,29 @@ module reward_distribution::merkle_tree_distribution {
             RootUpdated { new_root }
         );
     }
+
+    /// Updates the current admin of the system.
+    ///
+    /// # Arguments
+    /// - `owner`: Signer of the current owner of this module.
+    /// - `new_admin`: The new admin address that is submitted to the system.
+    ///
+    /// # Emits
+    /// - `AdminUpdated`
+    ///
+    /// # Aborts
+    /// - `E_NOT_OWNER` if not the owner of this module
+    public entry fun update_admin(owner: &signer, new_admin: address) acquires State, RewardDistributorController {
+        assert_owner(owner);
+        let state = borrow_global_mut<State>(get_obj_address());
+
+        state.admin = new_admin;
+
+        event::emit<AdminUpdated>(
+            AdminUpdated { new_admin }
+        );
+    }
+
 
     /// Updates the current root in the system.
     ///
@@ -142,7 +176,7 @@ module reward_distribution::merkle_tree_distribution {
         let addr = signer::address_of(account);
         let balance = coin::balance<SupraCoin>(addr);
         assert!(balance >= amount, error::invalid_state(E_INSUFFICIENT_FUNDS));
-        coin::transfer<SupraCoin>(account, signer::address_of(&get_vault_signer()), amount);
+        coin::transfer<SupraCoin>(account, get_vault_address(), amount);
         event::emit<Deposit>(Deposit { amount, account: addr });
     }
 
@@ -157,11 +191,10 @@ module reward_distribution::merkle_tree_distribution {
     ///
     /// # Aborts
     /// - `E_INSUFFICIENT_VAULT_FUNDS` if vault does not have enough Supra
-    public entry fun withdraw(owner: &signer, amount: u64) acquires RewardDistributorController {
+    public entry fun withdraw(owner: &signer, amount: u64) acquires State, RewardDistributorController {
         assert_owner(owner);
         let addr = signer::address_of(owner);
-        let balance = coin::balance<SupraCoin>(signer::address_of(&get_vault_signer()));
-        assert!(balance >= amount, error::invalid_state(E_INSUFFICIENT_VAULT_FUNDS));
+        assert!(get_vault_balance() >= amount, error::invalid_state(E_INSUFFICIENT_VAULT_FUNDS));
         coin::transfer<SupraCoin>(&get_vault_signer(), addr, amount);
         event::emit<Withdrawal>(Withdrawal { amount, to: addr });
     }
@@ -201,13 +234,15 @@ module reward_distribution::merkle_tree_distribution {
         assert!(entitled_cumulative > claimed_total, error::invalid_state(E_NOTHING_TO_CLAIM));
         let payout = entitled_cumulative - claimed_total;
 
+        assert!(coin::is_account_registered<SupraCoin>(user), error::invalid_state(E_SUPRA_COIN_NOT_REGISTERED));
+
         let vault_signer = get_vault_signer();
         let vault_bal = (coin::balance<SupraCoin>(signer::address_of(&vault_signer)));
         assert!(vault_bal >= payout, error::invalid_state(E_INSUFFICIENT_VAULT_FUNDS));
 
         coin::transfer<SupraCoin>(&vault_signer, user, payout);
 
-        internal_set_claimed_total(user, entitled_cumulative);
+        internal_set_claimed_total(user, entitled_cumulative, payout);
 
         event::emit<Withdrawal>(
             Withdrawal {
@@ -222,19 +257,28 @@ module reward_distribution::merkle_tree_distribution {
     **********************/
 
     // Asserts if the signer is the owner of this module
-    fun assert_owner(s: &signer) {
-        assert!(signer::address_of(s) == OWNER, error::permission_denied(E_NOT_OWNER));
+    fun assert_owner(s: &signer) acquires State, RewardDistributorController {
+        assert!(signer::address_of(s) == get_admin_address(), error::permission_denied(E_NOT_OWNER));
     }
 
     // Return the vault signer
     fun get_vault_signer(): signer acquires RewardDistributorController {
-        let poel_controler = borrow_global<RewardDistributorController>(get_storage_address());
-        account::create_signer_with_capability(&poel_controler.vault_signer_cap)
+        let controller = borrow_global<RewardDistributorController>(get_storage_address());
+        account::create_signer_with_capability(&controller.vault_signer_cap)
     }
 
     // Return the Storage Address
     fun get_storage_address(): address {
         object::create_object_address(&OWNER, REWARD_DISTRIBUTOR_STORAGE_ADDRESS_SEED)
+    }
+
+    fun get_obj_signer(): signer acquires RewardDistributorController {
+        let controller = borrow_global<RewardDistributorController>(get_storage_address());
+        object::generate_signer_for_extending(&controller.extend_ref)
+    }
+
+    fun get_obj_address(): address acquires RewardDistributorController {
+        signer::address_of(&get_obj_signer())
     }
 
     // Create a leaf hash out of `user` and `cumulative_amount`
@@ -255,9 +299,10 @@ module reward_distribution::merkle_tree_distribution {
     }
 
     // Set the total claimed by the `user`
-    fun internal_set_claimed_total(user: address, new_total: u64) acquires State {
-        let state = borrow_global_mut<State>(OWNER);
+    fun internal_set_claimed_total(user: address, new_total: u64, pay: u64) acquires State, RewardDistributorController {
+        let state = borrow_global_mut<State>(get_obj_address());
         table::upsert(&mut state.claimed_tokens, user, new_total);
+        state.total_claimed_tokens = state.total_claimed_tokens + pay;
     }
 
     // /*****************
@@ -266,20 +311,38 @@ module reward_distribution::merkle_tree_distribution {
 
     // Returns the current root value
     #[view]
-    public fun get_root_value(): vector<u8> acquires State {
-        borrow_global<State>(OWNER).current_root
+    public fun get_root_value(): vector<u8> acquires State, RewardDistributorController {
+        borrow_global<State>(get_obj_address()).current_root
     }
 
     // Returns total claimed of the `user`
     #[view]
-    public fun get_claimed_total(user: address): u64 acquires State {
-        let state = borrow_global<State>(OWNER);
+    public fun get_claimed_total(user: address): u64 acquires State, RewardDistributorController {
+        let state = borrow_global<State>(get_obj_address());
         *table::borrow_with_default(&state.claimed_tokens, user, &0u64)
     }
 
     // Returns total balance of the vault
     #[view]
     public fun get_vault_balance(): u64 acquires RewardDistributorController {
-        coin::balance<SupraCoin>(signer::address_of(&get_vault_signer()))
+        coin::balance<SupraCoin>(get_vault_address())
+    }
+
+    // Returns total balance of the vault
+    #[view]
+    public fun get_admin_address(): address acquires State, RewardDistributorController {
+        borrow_global<State>(get_obj_address()).admin
+    }
+
+    // Returns the total supra claimed by the users
+    #[view]
+    public fun get_total_claimed(): u64 acquires State, RewardDistributorController {
+        borrow_global<State>(get_obj_address()).total_claimed_tokens
+    }
+
+    // Returns the vault signer address
+    #[view]
+    public fun get_vault_address(): address acquires RewardDistributorController {
+        signer::address_of(&get_vault_signer())
     }
 }
