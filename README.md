@@ -28,7 +28,7 @@ A minimal, production‑oriented reward distributor using **Merkle proofs**. Adm
 ## Overview
 This module implements distribution of deposited assets to beneficiaries:
 
-- Admin deposits rewards into a **vault resource account** controlled by the module.
+- Anyone can deposit tokens into a **vault resource account** controlled by the module.
 - For each cycle/epoch, admin uploads a **Merkle root** committing to users’ **cumulative** entitlements.
 - A user claims with `(user, entitled_cumulative, proof)`. The module checks the proof against the current root and pays `entitled_cumulative − previously_claimed`.
 - Claimed totals are recorded on‑chain to prevent double claims.
@@ -38,9 +38,9 @@ This module implements distribution of deposited assets to beneficiaries:
 ## Design & Data Model
 
 ### Resources
-- `State { current_root: vector<u8>, claimed_tokens: Table<address, u64>, total_claimed_tokens: u64 }`
-  - Stores the active Merkle root and per‑address **claimed total** (cumulative claimed to date).
-- `RewardDistributorController { extend_ref: ExtendRef, vault_signer_cap: SignerCapability }`
+- `State { current_root: vector<u8>, claimed_tokens: Table<address, u64>, admin: address, total_claimed_tokens: u64 }`
+  - Stores the active Merkle root, per‑address **claimed total** (cumulative claimed to date), admin address and total tokens claimed from the vault.
+- `RewardDistributorController { extend_ref: ExtendRef, vault_signer_cap: SignerCapability, vault_address: address }`
   - Holds capability to operate the **vault resource account** that actually holds funds.
 
 ### Vault & Storage Addresses
@@ -55,6 +55,8 @@ This module implements distribution of deposited assets to beneficiaries:
 - `RootUpdated { new_root: vector<u8> }`
 - `Deposit { account: address, amount: u64 }`
 - `Withdrawal { to: address, amount: u64 }`
+- `Claimed { to: address, amount: u64 }`
+- `AdminUpdated { new_admin: address }
 
 ---
 
@@ -74,6 +76,7 @@ This module implements distribution of deposited assets to beneficiaries:
    - Creates storage object & resource account (vault), registers `SupraCoin` in vault.
    - Moves `RewardDistributorController` under the object signer.
    - Stores empty `State` under `OWNER` with empty root and table.
+   - Registers 
 2. **Fund**: Any account can `deposit(&signer, amount)` to send Supra to the vault.
 3. **Publish Root**: Owner calls `update_root(&signer, new_root)` for each distribution cycle.
 4. **Claim**: User (or any caller on their behalf) calls `claim_rewards(_caller, user, entitled_cumulative, proof)`:
@@ -97,6 +100,9 @@ Transfers `amount` of `SupraCoin` from the caller to the **vault**. Emits `Depos
 
 ### `withdraw(owner: &signer, amount: u64)` (acquires `RewardDistributorController`)
 Transfers `amount` from the **vault** back to the owner. Emits `Withdrawal`.
+
+### `update_admin(owner: &signer, new_admin: address) (acquires State)
+Sets a new admin. Emits AdminUpdated { new_admin }
 
 ---
 
