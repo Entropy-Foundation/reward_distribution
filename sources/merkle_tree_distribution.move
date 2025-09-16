@@ -1,3 +1,6 @@
+/// SPDX-License-Identifier: MIT
+/// Copyright (C) Supra -- 2025
+
 module reward_distribution::merkle_tree_distribution {
     use std::signer;
     use std::vector;
