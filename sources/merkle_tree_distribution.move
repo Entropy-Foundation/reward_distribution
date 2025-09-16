@@ -63,6 +63,7 @@ module reward_distribution::merkle_tree_distribution {
     #[event]
     struct RootUpdated has copy, drop, store {
       new_root: vector<u8>,
+      previous_root: vector<u8>,
     }
 
     #[event]
@@ -142,11 +143,11 @@ module reward_distribution::merkle_tree_distribution {
     public entry fun update_root(admin: &signer, new_root: vector<u8>) acquires State {
         assert_owner(admin);
         let state = borrow_global_mut<State>(get_storage_address());
-
+        let previous_root = state.current_root;
         state.current_root = new_root;
 
         event::emit<RootUpdated>(
-            RootUpdated { new_root }
+            RootUpdated { new_root, previous_root }
         );
     }
 
@@ -202,10 +203,13 @@ module reward_distribution::merkle_tree_distribution {
     /// - `Withdrawal`
     ///
     /// # Aborts
+    /// - `E_SUPRA_COIN_NOT_REGISTERED` if the user does not have a Supra Coin store registered
     /// - `E_INSUFFICIENT_VAULT_FUNDS` if vault does not have enough Supra
-    public entry fun withdraw(owner: &signer, amount: u64) acquires State, RewardDistributorController {
-        assert_owner(owner);
-        let addr = signer::address_of(owner);
+    public entry fun withdraw(admin: &signer, amount: u64) acquires State, RewardDistributorController {
+        assert_owner(admin);
+        let addr = signer::address_of(admin);
+        assert!(coin::is_account_registered<SupraCoin>(addr), error::invalid_state(E_SUPRA_COIN_NOT_REGISTERED));
+
         assert!(get_vault_balance() >= amount, error::invalid_state(E_INSUFFICIENT_VAULT_FUNDS));
         coin::transfer<SupraCoin>(&get_vault_signer(), addr, amount);
         event::emit<Withdrawal>(Withdrawal { amount, to: addr });
@@ -229,6 +233,7 @@ module reward_distribution::merkle_tree_distribution {
     /// # Aborts
     /// - `E_INVALID_MERKLE_PROOF` if proof is inavlid respective of the system root hash
     /// - `E_NOTHING_TO_CLAIM` if user has already exhausted their rewards
+    /// - `E_SUPRA_COIN_NOT_REGISTERED` if the user does not have a Supra Coin store registered
     /// - `E_INSUFFICIENT_VAULT_FUNDS` if the vault does not have sufficient balance to send
     public entry fun claim_rewards(
         _caller: &signer,
