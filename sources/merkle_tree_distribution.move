@@ -82,6 +82,12 @@ module reward_distribution::merkle_tree_distribution {
         amount: u64,
     }
 
+    #[event]
+    struct Claimed has copy, drop, store {
+        to: address,
+        amount: u64,
+    }
+
     /***************
      * Init Module
     ***************/
@@ -250,8 +256,8 @@ module reward_distribution::merkle_tree_distribution {
 
         internal_set_claimed_total(user, entitled_cumulative, payout);
 
-        event::emit<Withdrawal>(
-            Withdrawal {
+        event::emit<Claimed>(
+            Claimed {
                 amount: payout,
                 to: user,
             }
