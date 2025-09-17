@@ -171,7 +171,7 @@ module reward_distribution::merkle_tree_distribution {
     }
 
 
-    /// Updates the current root in the system.
+    /// Allows anyone to deposit Supra to the vault.
     ///
     /// # Arguments
     /// - `account`: Signer of the account who will deposit Supra.
@@ -317,10 +317,10 @@ module reward_distribution::merkle_tree_distribution {
     }
 
     // Set the total claimed by the `user`
-    fun internal_set_claimed_total(user: address, new_total: u64, pay: u64) acquires State {
+    fun internal_set_claimed_total(user: address, new_total: u64, claimed_tokens: u64) acquires State {
         let state = borrow_global_mut<State>(get_storage_address());
         table::upsert(&mut state.claimed_tokens, user, new_total);
-        state.total_claimed_tokens = state.total_claimed_tokens + pay;
+        state.total_claimed_tokens = state.total_claimed_tokens + claimed_tokens;
     }
 
     // /*****************
