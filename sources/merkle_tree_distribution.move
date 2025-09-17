@@ -62,8 +62,7 @@ module reward_distribution::merkle_tree_distribution {
 
     #[event]
     struct RootUpdated has copy, drop, store {
-      new_root: vector<u8>,
-      previous_root: vector<u8>,
+      new_root: vector<u8>
     }
 
     #[event]
@@ -143,11 +142,10 @@ module reward_distribution::merkle_tree_distribution {
     public entry fun update_root(admin: &signer, new_root: vector<u8>) acquires State {
         assert_admin(admin);
         let state = borrow_global_mut<State>(get_storage_address());
-        let previous_root = state.current_root;
         state.current_root = new_root;
 
         event::emit<RootUpdated>(
-            RootUpdated { new_root, previous_root }
+            RootUpdated { new_root }
         );
     }
 
