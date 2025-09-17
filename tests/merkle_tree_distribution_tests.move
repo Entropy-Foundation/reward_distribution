@@ -209,7 +209,7 @@ module reward_distribution::merkle_tree_distribution_tests {
         let owner_before = bal(signer::address_of(owner));
         let vault_before = merkle_tree_distribution::get_vault_balance();
 
-        merkle_tree_distribution::withdraw(owner, 120);
+        merkle_tree_distribution::withdraw(owner, signer::address_of(owner), 120);
 
         assert!(bal(signer::address_of(owner)) == owner_before + 120, 0);
         assert!(merkle_tree_distribution::get_vault_balance() == vault_before - 120, 0);
@@ -227,7 +227,7 @@ module reward_distribution::merkle_tree_distribution_tests {
 
         register(bob);
 
-        merkle_tree_distribution::withdraw(bob, 1);
+        merkle_tree_distribution::withdraw(bob, signer::address_of(bob), 1);
 
         clean_up(burn_cap, mint_cap);
     }
@@ -241,7 +241,7 @@ module reward_distribution::merkle_tree_distribution_tests {
         let (burn_cap, mint_cap) = init_supra(admin);
         register(owner);
 
-        merkle_tree_distribution::withdraw(owner, 1);
+        merkle_tree_distribution::withdraw(owner, signer::address_of(owner), 1);
 
         clean_up(burn_cap, mint_cap);
     }

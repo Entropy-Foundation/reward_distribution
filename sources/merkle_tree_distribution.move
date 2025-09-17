@@ -95,7 +95,7 @@ module reward_distribution::merkle_tree_distribution {
     /// # Aborts
     /// - `E_NOT_OWNER` if not the owner of this module
     public entry fun init(owner: &signer) {
-        assert!(signer::address_of(owner) == OWNER, error::permission_denied(E_NOT_OWNER));
+        assert_owner(owner);
 
         let constructor_ref = &object::create_named_object(owner, REWARD_DISTRIBUTOR_STORAGE_ADDRESS_SEED);
         let obj_signer = &object::generate_signer(constructor_ref);
@@ -128,7 +128,7 @@ module reward_distribution::merkle_tree_distribution {
     /// # Aborts
     /// - `E_NOT_OWNER` if not the owner of this module
     public entry fun update_root(owner: &signer, new_root: vector<u8>) acquires State, RewardDistributorController {
-        assert_owner(owner);
+        assert_admin(owner);
         let state = borrow_global_mut<State>(get_obj_address());
 
         state.current_root = new_root;
@@ -191,12 +191,11 @@ module reward_distribution::merkle_tree_distribution {
     ///
     /// # Aborts
     /// - `E_INSUFFICIENT_VAULT_FUNDS` if vault does not have enough Supra
-    public entry fun withdraw(owner: &signer, amount: u64) acquires State, RewardDistributorController {
+    public entry fun withdraw(owner: &signer, withdrawal_address: address, amount: u64) acquires RewardDistributorController {
         assert_owner(owner);
-        let addr = signer::address_of(owner);
         assert!(get_vault_balance() >= amount, error::invalid_state(E_INSUFFICIENT_VAULT_FUNDS));
-        coin::transfer<SupraCoin>(&get_vault_signer(), addr, amount);
-        event::emit<Withdrawal>(Withdrawal { amount, to: addr });
+        coin::transfer<SupraCoin>(&get_vault_signer(), withdrawal_address, amount);
+        event::emit<Withdrawal>(Withdrawal { amount, to: withdrawal_address });
     }
 
     // /***************
@@ -256,10 +255,16 @@ module reward_distribution::merkle_tree_distribution {
      * Private Functions
     **********************/
 
-    // Asserts if the signer is the owner of this module
-    fun assert_owner(s: &signer) acquires State, RewardDistributorController {
+    // Asserts if the signer is the admin of this module
+    fun assert_admin(s: &signer) acquires State, RewardDistributorController {
         assert!(signer::address_of(s) == get_admin_address(), error::permission_denied(E_NOT_OWNER));
     }
+
+    // Asserts if the signer is the owner of this module
+    fun assert_owner(s: &signer) {
+        assert!(signer::address_of(s) == get_owner_address(), error::permission_denied(E_NOT_OWNER));
+    }
+
 
     // Return the vault signer
     fun get_vault_signer(): signer acquires RewardDistributorController {
@@ -344,5 +349,11 @@ module reward_distribution::merkle_tree_distribution {
     #[view]
     public fun get_vault_address(): address acquires RewardDistributorController {
         signer::address_of(&get_vault_signer())
+    }
+
+    // Returns the owner's address
+    #[view]
+    public fun get_owner_address(): address {
+        OWNER
     }
 }
