@@ -29,13 +29,14 @@ module reward_distribution::merkle_tree_distribution {
      * Errors
     ***********************/
     const E_NOT_ADMIN: u64 = 1;
-    const E_ROOT_EXISTS: u64 = 2;
-    const E_ROOT_NOT_FOUND: u64 = 3;
-    const E_INVALID_MERKLE_PROOF: u64 = 4;
-    const E_NOTHING_TO_CLAIM: u64 = 5;
-    const E_INSUFFICIENT_VAULT_FUNDS: u64 = 6;
-    const E_INSUFFICIENT_FUNDS: u64 = 7;
-    const E_SUPRA_COIN_NOT_REGISTERED: u64 = 8;
+    const E_NOT_OWNER: u64 = 2;
+    const E_ROOT_EXISTS: u64 = 3;
+    const E_ROOT_NOT_FOUND: u64 = 4;
+    const E_INVALID_MERKLE_PROOF: u64 = 5;
+    const E_NOTHING_TO_CLAIM: u64 = 6;
+    const E_INSUFFICIENT_VAULT_FUNDS: u64 = 7;
+    const E_INSUFFICIENT_FUNDS: u64 = 8;
+    const E_SUPRA_COIN_NOT_REGISTERED: u64 = 9;
 
     /***********************
      * Resources
@@ -101,7 +102,7 @@ module reward_distribution::merkle_tree_distribution {
     ///
     ///
     /// # Aborts
-    /// - `E_NOT_ADMIN` if not the owner of this module
+    /// - `E_NOT_OWNER` if not the owner of this module
     public entry fun init(owner: &signer) {
         assert_owner(owner);
 
@@ -141,7 +142,7 @@ module reward_distribution::merkle_tree_distribution {
     /// # Aborts
     /// - `E_NOT_ADMIN` if not the owner of this module
     public entry fun update_root(admin: &signer, new_root: vector<u8>) acquires State {
-        assert_owner(admin);
+        assert_admin(admin);
         let state = borrow_global_mut<State>(get_storage_address());
         let previous_root = state.current_root;
         state.current_root = new_root;
@@ -161,7 +162,7 @@ module reward_distribution::merkle_tree_distribution {
     /// - `AdminUpdated`
     ///
     /// # Aborts
-    /// - `E_NOT_ADMIN` if not the owner of this module
+    /// - `E_NOT_OWNER` if the caller is not the OWNER of this module
     public entry fun update_admin(owner: &signer, new_admin: address) acquires State {
         assert_owner(owner);
         let state = borrow_global_mut<State>(get_storage_address());
@@ -198,17 +199,18 @@ module reward_distribution::merkle_tree_distribution {
     /// # Arguments
     /// - `account`: Signer of the account who will with Supra.
     /// - `amount`: Amount of Supra being deposited.
+    /// - `withdrawal_address`: Address that will get Supra credited
     ///
     /// # Emits
     /// - `Withdrawal`
     ///
     /// # Aborts
+    /// - `E_NOT_OWNER` if the caller is not the OWNER of this module
     /// - `E_SUPRA_COIN_NOT_REGISTERED` if the user does not have a Supra Coin store registered
     /// - `E_INSUFFICIENT_VAULT_FUNDS` if vault does not have enough Supra
-    public entry fun withdraw(admin: &signer, amount: u64) acquires State, RewardDistributorController {
-        assert_owner(admin);
-        let addr = signer::address_of(admin);
-        assert!(coin::is_account_registered<SupraCoin>(addr), error::invalid_state(E_SUPRA_COIN_NOT_REGISTERED));
+    public entry fun withdraw(owner: &signer, withdrawal_address: address, amount: u64) acquires State, RewardDistributorController {
+        assert_owner(owner);
+        assert!(coin::is_account_registered<SupraCoin>(withdrawal_address), error::invalid_state(E_SUPRA_COIN_NOT_REGISTERED));
 
         assert!(get_vault_balance() >= amount, error::invalid_state(E_INSUFFICIENT_VAULT_FUNDS));
         coin::transfer<SupraCoin>(&get_vault_signer(), withdrawal_address, amount);
@@ -274,7 +276,7 @@ module reward_distribution::merkle_tree_distribution {
     **********************/
 
     // Asserts if the signer is the admin of this module
-    fun assert_admin(s: &signer) acquires State, RewardDistributorController {
+    fun assert_admin(s: &signer) acquires State {
         assert!(signer::address_of(s) == get_admin_address(), error::permission_denied(E_NOT_OWNER));
     }
 
@@ -295,6 +297,7 @@ module reward_distribution::merkle_tree_distribution {
         object::create_object_address(&OWNER, REWARD_DISTRIBUTOR_STORAGE_ADDRESS_SEED)
     }
 
+    // Return the object signer
     fun get_obj_signer(): signer acquires RewardDistributorController {
         let controller = borrow_global<RewardDistributorController>(get_storage_address());
         object::generate_signer_for_extending(&controller.extend_ref)
@@ -347,7 +350,7 @@ module reward_distribution::merkle_tree_distribution {
         coin::balance<SupraCoin>(get_vault_address())
     }
 
-    // Returns total balance of the vault
+    // Returns admin address of the system
     #[view]
     public fun get_admin_address(): address acquires State {
         borrow_global<State>(get_storage_address()).admin
@@ -363,12 +366,6 @@ module reward_distribution::merkle_tree_distribution {
     #[view]
     public fun get_vault_address(): address acquires State {
         borrow_global<State>(get_storage_address()).vault_address
-    }
-
-    // Returns the owner's address
-    #[view]
-    public fun get_owner_address(): address {
-        OWNER
     }
 
     // Returns the owner's address
