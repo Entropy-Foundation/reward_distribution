@@ -30,12 +30,11 @@ module reward_distribution::merkle_tree_distribution {
     ***********************/
     const E_NOT_ADMIN: u64 = 1;
     const E_NOT_OWNER: u64 = 2;
-    const E_ROOT_EXISTS: u64 = 3;
-    const E_INVALID_MERKLE_PROOF: u64 = 4;
-    const E_NOTHING_TO_CLAIM: u64 = 5;
-    const E_INSUFFICIENT_VAULT_FUNDS: u64 = 6;
-    const E_INSUFFICIENT_FUNDS: u64 = 7;
-    const E_SUPRA_COIN_NOT_REGISTERED: u64 = 9;
+    const E_INVALID_MERKLE_PROOF: u64 = 3;
+    const E_NOTHING_TO_CLAIM: u64 = 4;
+    const E_INSUFFICIENT_VAULT_FUNDS: u64 = 5;
+    const E_INSUFFICIENT_FUNDS: u64 = 6;
+    const E_SUPRA_COIN_NOT_REGISTERED: u64 = 7;
 
     /***********************
      * Resources
