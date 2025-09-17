@@ -277,7 +277,7 @@ module reward_distribution::merkle_tree_distribution {
 
     // Asserts if the signer is the admin of this module
     fun assert_admin(s: &signer) acquires State {
-        assert!(signer::address_of(s) == get_admin_address(), error::permission_denied(E_NOT_OWNER));
+        assert!(signer::address_of(s) == get_admin_address(), error::permission_denied(E_NOT_ADMIN));
     }
 
     // Asserts if the signer is the owner of this module
