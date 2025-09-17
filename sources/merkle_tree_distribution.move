@@ -226,7 +226,7 @@ module reward_distribution::merkle_tree_distribution {
     /// - `proof`: Vector of proof hash that recreates the merkle root registered by the system.
     ///
     /// # Emits
-    /// - `Withdrawal`
+    /// - `Claimed`
     ///
     /// # Aborts
     /// - `E_INVALID_MERKLE_PROOF` if proof is inavlid respective of the system root hash
@@ -291,12 +291,6 @@ module reward_distribution::merkle_tree_distribution {
     // Return the Storage Address
     fun get_storage_address(): address {
         object::create_object_address(&OWNER, REWARD_DISTRIBUTOR_STORAGE_ADDRESS_SEED)
-    }
-
-    // Return the object signer
-    fun get_obj_signer(): signer acquires RewardDistributorController {
-        let controller = borrow_global<RewardDistributorController>(get_storage_address());
-        object::generate_signer_for_extending(&controller.extend_ref)
     }
 
     // Create a leaf hash out of `user` and `cumulative_amount`
