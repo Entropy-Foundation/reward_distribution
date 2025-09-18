@@ -100,7 +100,7 @@ module reward_distribution::merkle_tree_distribution {
     ///
     /// # Aborts
     /// - `E_NOT_OWNER` if not the owner of this module
-    public entry fun init(owner: &signer) {
+    fun init_module(owner: &signer) {
         assert_owner(owner);
 
         let constructor_ref = &object::create_named_object(owner, REWARD_DISTRIBUTOR_STORAGE_ADDRESS_SEED);
@@ -252,8 +252,7 @@ module reward_distribution::merkle_tree_distribution {
         assert!(coin::is_account_registered<SupraCoin>(user), error::invalid_state(E_SUPRA_COIN_NOT_REGISTERED));
 
         let vault_signer = get_vault_signer();
-        let vault_bal = (coin::balance<SupraCoin>(signer::address_of(&vault_signer)));
-        assert!(vault_bal >= payout, error::invalid_state(E_INSUFFICIENT_VAULT_FUNDS));
+        assert!(get_vault_balance() >= payout, error::invalid_state(E_INSUFFICIENT_VAULT_FUNDS));
 
         coin::transfer<SupraCoin>(&vault_signer, user, payout);
 
@@ -362,5 +361,14 @@ module reward_distribution::merkle_tree_distribution {
     #[view]
     public fun get_owner_address(): address {
         OWNER
+    }
+
+    // /**********************************
+    //  * Only for test functions
+    // **********************************/
+
+    #[test_only]
+    public fun init_for_test(deployer: &signer) {
+        init_module(deployer);
     }
 }

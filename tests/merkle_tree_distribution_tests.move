@@ -66,7 +66,7 @@ module reward_distribution::merkle_tree_distribution_tests {
     fun test_init_by_owner_succeeds(supra: &signer, admin: &signer, owner: &signer) {
         ensure_accounts();
         let (burn_cap, mint_cap) = init_supra(admin);
-        merkle_tree_distribution::init(owner);
+        merkle_tree_distribution::init_for_test(owner);
 
         let root = merkle_tree_distribution::get_root_value();
         assert!(vector::length(&root) == 0, 0);
@@ -81,7 +81,7 @@ module reward_distribution::merkle_tree_distribution_tests {
         ensure_accounts();
         let (burn_cap, mint_cap) = init_supra(admin);
         coin::register<SupraCoin>(supra);
-        merkle_tree_distribution::init(alice);
+        merkle_tree_distribution::init_for_test(alice);
         clean_up(burn_cap, mint_cap);
     }
 
@@ -93,7 +93,7 @@ module reward_distribution::merkle_tree_distribution_tests {
         ensure_accounts();
         let (burn_cap, mint_cap) = init_supra(admin);
         coin::register<SupraCoin>(supra);
-        merkle_tree_distribution::init(owner);
+        merkle_tree_distribution::init_for_test(owner);
 
         let new_root = make_leaf(ALICE, 500);
         merkle_tree_distribution::update_root(owner, new_root);
@@ -107,7 +107,7 @@ module reward_distribution::merkle_tree_distribution_tests {
     fun test_update_root_by_non_owner_fails(supra: &signer,owner: &signer, alice: &signer) {
         ensure_accounts();
         coin::register<SupraCoin>(supra);
-        merkle_tree_distribution::init(owner);
+        merkle_tree_distribution::init_for_test(owner);
         let new_root = make_leaf(ALICE, 123);
         merkle_tree_distribution::update_root(alice, new_root);
     }
@@ -120,7 +120,7 @@ module reward_distribution::merkle_tree_distribution_tests {
         ensure_accounts();
         let (burn_cap, mint_cap) = init_supra(admin);
         coin::register<SupraCoin>(supra);
-        merkle_tree_distribution::init(owner);
+        merkle_tree_distribution::init_for_test(owner);
         assert!(merkle_tree_distribution::get_admin_address() == signer::address_of(owner), 123);
         merkle_tree_distribution::update_admin(owner, signer::address_of(new_admin));
         assert!(merkle_tree_distribution::get_admin_address() == signer::address_of(new_admin), 123);
@@ -135,7 +135,7 @@ module reward_distribution::merkle_tree_distribution_tests {
         let (burn_cap, mint_cap) = init_supra(supra);
 
         coin::register<SupraCoin>(supra);
-        merkle_tree_distribution::init(owner);
+        merkle_tree_distribution::init_for_test(owner);
         merkle_tree_distribution::update_admin(alice, signer::address_of(alice));
 
         clean_up(burn_cap, mint_cap);
@@ -149,7 +149,7 @@ module reward_distribution::merkle_tree_distribution_tests {
         ensure_accounts();
         let (burn_cap, mint_cap) = init_supra(admin);
         coin::register<SupraCoin>(supra);
-        merkle_tree_distribution::init(owner);
+        merkle_tree_distribution::init_for_test(owner);
         register(owner);
 
         mint_to(&mint_cap, signer::address_of(owner), 1_000);
@@ -173,7 +173,7 @@ module reward_distribution::merkle_tree_distribution_tests {
         ensure_accounts();
         let (burn_cap, mint_cap) = init_supra(admin);
         coin::register<SupraCoin>(supra);
-        merkle_tree_distribution::init(owner);
+        merkle_tree_distribution::init_for_test(owner);
 
         register(alice);
 
@@ -198,7 +198,7 @@ module reward_distribution::merkle_tree_distribution_tests {
         ensure_accounts();
         let (burn_cap, mint_cap) = init_supra(admin);
 
-        merkle_tree_distribution::init(owner);
+        merkle_tree_distribution::init_for_test(owner);
 
         register(owner);
 
@@ -223,7 +223,7 @@ module reward_distribution::merkle_tree_distribution_tests {
         ensure_accounts();
         let (burn_cap, mint_cap) = init_supra(admin);
         coin::register<SupraCoin>(supra);
-        merkle_tree_distribution::init(owner);
+        merkle_tree_distribution::init_for_test(owner);
 
         register(bob);
 
@@ -237,7 +237,7 @@ module reward_distribution::merkle_tree_distribution_tests {
     fun test_withdraw_owner_insufficient_balance_fails(supra: &signer,owner: &signer, admin: &signer) {
         ensure_accounts();
         coin::register<SupraCoin>(supra);
-        merkle_tree_distribution::init(owner);
+        merkle_tree_distribution::init_for_test(owner);
         let (burn_cap, mint_cap) = init_supra(admin);
         register(owner);
 
@@ -255,7 +255,7 @@ module reward_distribution::merkle_tree_distribution_tests {
         ensure_accounts();
         let (burn_cap, mint_cap) = init_supra(admin);
         coin::register<SupraCoin>(supra);
-        merkle_tree_distribution::init(owner);
+        merkle_tree_distribution::init_for_test(owner);
 
         register(owner);
         register(alice);
@@ -290,7 +290,7 @@ module reward_distribution::merkle_tree_distribution_tests {
         let (burn_cap, mint_cap) = init_supra(supra);
         account::create_account_for_test(signer::address_of(supra));
         coin::register<SupraCoin>(supra);
-        merkle_tree_distribution::init(owner);
+        merkle_tree_distribution::init_for_test(owner);
 
         register(owner);
         register(alice);
@@ -320,7 +320,7 @@ module reward_distribution::merkle_tree_distribution_tests {
         ensure_accounts();
         let (burn_cap, mint_cap) = init_supra(admin);
         coin::register<SupraCoin>(supra);
-        merkle_tree_distribution::init(owner);
+        merkle_tree_distribution::init_for_test(owner);
 
         register(owner);
         account::create_account_for_test(ALICE);
@@ -354,7 +354,7 @@ module reward_distribution::merkle_tree_distribution_tests {
         ensure_accounts();
         let (burn_cap, mint_cap) = init_supra(admin);
         coin::register<SupraCoin>(supra);
-        merkle_tree_distribution::init(owner);
+        merkle_tree_distribution::init_for_test(owner);
 
         register(owner);
         register(alice);
@@ -375,7 +375,7 @@ module reward_distribution::merkle_tree_distribution_tests {
         ensure_accounts();
         let (burn_cap, mint_cap) = init_supra(admin);
         coin::register<SupraCoin>(supra);
-        merkle_tree_distribution::init(owner);
+        merkle_tree_distribution::init_for_test(owner);
 
         register(owner);
         register(alice);
@@ -397,7 +397,7 @@ module reward_distribution::merkle_tree_distribution_tests {
         ensure_accounts();
         let (burn_cap, mint_cap) = init_supra(admin);
         coin::register<SupraCoin>(supra);
-        merkle_tree_distribution::init(owner);
+        merkle_tree_distribution::init_for_test(owner);
 
         register(owner);
         register(alice);
@@ -421,7 +421,7 @@ module reward_distribution::merkle_tree_distribution_tests {
         ensure_accounts();
         let (burn_cap, mint_cap) = init_supra(admin);
         coin::register<SupraCoin>(supra);
-        merkle_tree_distribution::init(owner);
+        merkle_tree_distribution::init_for_test(owner);
 
         register(owner);
         register(alice);
@@ -443,7 +443,7 @@ module reward_distribution::merkle_tree_distribution_tests {
 
         let (burn_cap, mint_cap) = init_supra(admin);
         coin::register<SupraCoin>(supra);
-        merkle_tree_distribution::init(owner);
+        merkle_tree_distribution::init_for_test(owner);
         register(owner);
         register(alice);
         mint_to(&mint_cap, signer::address_of(owner), 1_000);
@@ -468,7 +468,7 @@ module reward_distribution::merkle_tree_distribution_tests {
         ensure_accounts();
         let (burn_cap, mint_cap) = init_supra(admin);
         coin::register<SupraCoin>(supra);
-        merkle_tree_distribution::init(owner);
+        merkle_tree_distribution::init_for_test(owner);
 
         register(owner);
         register(alice);
