@@ -75,15 +75,6 @@ module reward_distribution::merkle_tree_distribution_tests {
         clean_up(burn_cap, mint_cap);
     }
 
-    #[test(supra = @supra_framework, admin = @0x1, alice = @0xA11CE)]
-    #[expected_failure] // E_NOT_OWNER
-    fun test_init_by_non_owner_fails(supra: &signer, admin: &signer,alice: &signer) {
-        ensure_accounts();
-        let (burn_cap, mint_cap) = init_supra(admin);
-        coin::register<SupraCoin>(supra);
-        merkle_tree_distribution::init_for_test(alice);
-        clean_up(burn_cap, mint_cap);
-    }
 
     /***********************
      * update_root()
