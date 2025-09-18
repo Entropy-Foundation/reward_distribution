@@ -2,12 +2,9 @@
 
 A minimal, production-oriented reward distributor that pays users based on a **Merkle root** of cumulative entitlements. Admins update the root; users claim the delta since their last claim. Includes a simple Merkle helper module and tests.
 
-## Status (`reward_distribution::merkle_tree_distribution`)
-**Status: Work in Progress.** This module is under development. A **root challenge period** is planned, allowing challengers to dispute a submitted root within a configurable window.
-
 ## Modules
 - `reward_distribution::merkle_tree` — Merkle helpers (hashing, proof verification).
-- `reward_distribution::merkle_tree_distribution` — Core distributor (vault, admin, claim logic).
+- `reward_distribution::merkle_tree_distribution` — Core distributor (vault, admin, claim logic). This module is under development. A root challenge period is planned, allowing challengers to dispute a submitted root within a configurable window.
 
 ## Key Entry Functions
 - `update_root(admin, new_root)` — Set the active Merkle root.
