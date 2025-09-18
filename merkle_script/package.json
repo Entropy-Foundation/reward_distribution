@@ -1,0 +1,21 @@
+{
+  "name": "test_merkle",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "packageManager": "pnpm@10.12.1",
+  "dependencies": {
+    "@aptos-labs/ts-sdk": "^4.0.0",
+    "dotenv": "^17.2.2",
+    "js-sha3": "^0.9.3",
+    "node-fetch": "^3.3.2",
+    "supra-l1-sdk": "^4.6.0"
+  }
+}

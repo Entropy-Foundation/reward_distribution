@@ -1,3 +1,5 @@
 build/
 deployment/
+**/node_modules
+**/.env
 test_merkle/

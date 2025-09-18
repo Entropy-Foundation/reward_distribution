@@ -1,0 +1,18 @@
+[
+  {
+    "address": "0x3172d93436c1e0a5055786cfcd2cd3529120ee5b7c2068fb516c675408425d2e",
+    "cumulative_amount": 27000000
+  },
+  {
+    "address": "0xfdd42652a5f1037d161d0ef1543f645562d90183cc55ad4d5ca8c2d23ff61522",
+    "cumulative_amount": 25000000
+  },
+  {
+    "address": "0xd8ea581d62fb1e6670975a798383fa282cf21f2b9f44b9558eef07bdf3044e48",
+    "cumulative_amount": 24000000
+  },
+  {
+    "address": "0x647a35f9d2ca4b76f4feba878751ce43b439fd993c32e806c9aa43cf6fc87462",
+    "cumulative_amount": 23000000
+  }
+]

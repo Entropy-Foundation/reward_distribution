@@ -61,7 +61,8 @@ module reward_distribution::merkle_tree_distribution {
 
     #[event]
     struct RootUpdated has copy, drop, store {
-      new_root: vector<u8>
+      new_root: vector<u8>,
+      prev_root: vector<u8>
     }
 
     #[event]
@@ -97,12 +98,7 @@ module reward_distribution::merkle_tree_distribution {
     /// # Arguments
     /// - `owner`: Signer of the owner of this module.
     ///
-    ///
-    /// # Aborts
-    /// - `E_NOT_OWNER` if not the owner of this module
-    public entry fun init(owner: &signer) {
-        assert_owner(owner);
-
+    fun init_module(owner: &signer) {
         let constructor_ref = &object::create_named_object(owner, REWARD_DISTRIBUTOR_STORAGE_ADDRESS_SEED);
         let obj_signer = &object::generate_signer(constructor_ref);
         let extend_ref = object::generate_extend_ref(constructor_ref);
@@ -141,10 +137,11 @@ module reward_distribution::merkle_tree_distribution {
     public entry fun update_root(admin: &signer, new_root: vector<u8>) acquires State {
         assert_admin(admin);
         let state = borrow_global_mut<State>(get_storage_address());
+        let prev_root = state.current_root;
         state.current_root = new_root;
 
         event::emit<RootUpdated>(
-            RootUpdated { new_root }
+            RootUpdated { new_root, prev_root }
         );
     }
 
@@ -252,8 +249,7 @@ module reward_distribution::merkle_tree_distribution {
         assert!(coin::is_account_registered<SupraCoin>(user), error::invalid_state(E_SUPRA_COIN_NOT_REGISTERED));
 
         let vault_signer = get_vault_signer();
-        let vault_bal = (coin::balance<SupraCoin>(signer::address_of(&vault_signer)));
-        assert!(vault_bal >= payout, error::invalid_state(E_INSUFFICIENT_VAULT_FUNDS));
+        assert!(get_vault_balance() >= payout, error::invalid_state(E_INSUFFICIENT_VAULT_FUNDS));
 
         coin::transfer<SupraCoin>(&vault_signer, user, payout);
 
@@ -362,5 +358,14 @@ module reward_distribution::merkle_tree_distribution {
     #[view]
     public fun get_owner_address(): address {
         OWNER
+    }
+
+    // /**********************************
+    //  * Only for test functions
+    // **********************************/
+
+    #[test_only]
+    public fun init_for_test(deployer: &signer) {
+        init_module(deployer);
     }
 }
