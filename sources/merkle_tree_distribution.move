@@ -133,7 +133,7 @@ module reward_distribution::merkle_tree_distribution {
     /// - `RootUpdated`
     ///
     /// # Aborts
-    /// - `E_NOT_ADMIN` if not the owner of this module
+    /// - `E_NOT_ADMIN` if the caller is not the admin
     public entry fun update_root(admin: &signer, new_root: vector<u8>) acquires State {
         assert_admin(admin);
         let state = borrow_global_mut<State>(get_storage_address());
@@ -190,8 +190,8 @@ module reward_distribution::merkle_tree_distribution {
     /// Withdraw the leftover rewards by the admin.
     ///
     /// # Arguments
-    /// - `account`: Signer of the account who will with Supra.
-    /// - `amount`: Amount of Supra being deposited.
+    /// - `account`: Signer of the account
+    /// - `amount`: Amount of SUPRA to withdraw
     /// - `withdrawal_address`: Address that will get Supra credited
     ///
     /// # Emits
@@ -217,17 +217,17 @@ module reward_distribution::merkle_tree_distribution {
     /// Claim the rewards awarded to the user.
     ///
     /// # Arguments
-    /// - `caller`: Signer of the caller account calling .
-    /// - `user`: Account address entitled to reward.
-    /// - `entitled_cumulative`: Total Rewards awarded to the user till date.
-    /// - `proof`: Vector of proof hash that recreates the merkle root registered by the system.
+    /// - `caller`: Signer of the caller account 
+    /// - `user`: Account address entitled to reward
+    /// - `entitled_cumulative`: Total entitled rewards of the user
+    /// - `proof`: Vector of proof hash that recreates the merkle root registered in the system
     ///
     /// # Emits
     /// - `Claimed`
     ///
     /// # Aborts
     /// - `E_INVALID_MERKLE_PROOF` if proof is inavlid respective of the system root hash
-    /// - `E_NOTHING_TO_CLAIM` if user has already exhausted their rewards
+    /// - `E_NOTHING_TO_CLAIM` if user has already claimed everything
     /// - `E_SUPRA_COIN_NOT_REGISTERED` if the user does not have a Supra Coin store registered
     /// - `E_INSUFFICIENT_VAULT_FUNDS` if the vault does not have sufficient balance to send
     public entry fun claim_rewards(
@@ -323,7 +323,7 @@ module reward_distribution::merkle_tree_distribution {
         borrow_global<State>(get_storage_address()).current_root
     }
 
-    // Returns total claimed of the `user`
+    // Returns total claimed by the `user`
     #[view]
     public fun get_claimed_total(user: address): u64 acquires State {
         let state = borrow_global<State>(get_storage_address());
@@ -342,7 +342,7 @@ module reward_distribution::merkle_tree_distribution {
         borrow_global<State>(get_storage_address()).admin
     }
 
-    // Returns the total supra claimed by the users
+    // Returns the total supra claimed by all users
     #[view]
     public fun get_total_claimed(): u64 acquires State {
         borrow_global<State>(get_storage_address()).total_claimed_tokens
@@ -354,7 +354,7 @@ module reward_distribution::merkle_tree_distribution {
         borrow_global<State>(get_storage_address()).vault_address
     }
 
-    // Returns the owner's address
+    // Returns the address of owner
     #[view]
     public fun get_owner_address(): address {
         OWNER
