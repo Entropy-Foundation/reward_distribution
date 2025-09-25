@@ -5,6 +5,7 @@ module reward_distribution::merkle_tree_distribution {
     use std::signer;
     use std::vector;
     use std::error;
+    use supra_framework::supra_account;
 
     use supra_framework::bcs;
     use supra_framework::hash;
@@ -246,12 +247,12 @@ module reward_distribution::merkle_tree_distribution {
         assert!(entitled_cumulative > claimed_total, error::invalid_state(E_NOTHING_TO_CLAIM));
         let payout = entitled_cumulative - claimed_total;
 
-        assert!(coin::is_account_registered<SupraCoin>(user), error::invalid_state(E_SUPRA_COIN_NOT_REGISTERED));
+        // assert!(coin::is_account_registered<SupraCoin>(user), error::invalid_state(E_SUPRA_COIN_NOT_REGISTERED));
 
         let vault_signer = get_vault_signer();
         assert!(get_vault_balance() >= payout, error::invalid_state(E_INSUFFICIENT_VAULT_FUNDS));
 
-        coin::transfer<SupraCoin>(&vault_signer, user, payout);
+        supra_account::transfer(&vault_signer, user, payout);
 
         internal_set_claimed_total(user, entitled_cumulative, payout);
 
