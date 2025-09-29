@@ -247,8 +247,6 @@ module reward_distribution::merkle_tree_distribution {
         assert!(entitled_cumulative > claimed_total, error::invalid_state(E_NOTHING_TO_CLAIM));
         let payout = entitled_cumulative - claimed_total;
 
-        // assert!(coin::is_account_registered<SupraCoin>(user), error::invalid_state(E_SUPRA_COIN_NOT_REGISTERED));
-
         let vault_signer = get_vault_signer();
         assert!(get_vault_balance() >= payout, error::invalid_state(E_INSUFFICIENT_VAULT_FUNDS));
 
